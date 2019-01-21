@@ -31,7 +31,6 @@ scala> val num_files_processed = sensor_df.inputFiles.length
 num_files_processed: Int = 2
 
 scala>
-
 scala> val num_processed_measurements = sensor_df.count
 num_processed_measurements: Long = 8
 
