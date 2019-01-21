@@ -1,0 +1,23 @@
+val dir="/directory_path"
+
+import org.apache.spark.sql.types._
+
+val customSchema = StructType(Array(StructField("sensor_id", StringType, true),StructField("humidity", FloatType, true)))
+
+val sensor_df = spark.read.option("header",true).schema(customSchema).csv(dir+"*.csv")
+
+val non_nan_df = sensor_df.filter(isnan('humidity) === false).groupBy(col("sensor_id")).agg(min(col("humidity")).as("min_value"),max(col("humidity")).as("max_value"),avg(col("humidity")).as("avg_value")).sort("avg_value")
+
+val nan_df = sensor_df.as("table1").join(
+non_nan_df.as("table2"),
+$"table1.sensor_id" === $"table2.sensor_id",
+"leftanti").groupBy($"table1.sensor_id").agg(min($"table1.humidity").as("min"), max($"table1.humidity").as("max"), avg($"table1.humidity").as("avg")).sort("avg")
+
+
+val num_files_processed = sensor_df.inputFiles.length
+
+val num_processed_measurements = sensor_df.count
+
+val num_failed_measurements = sensor_df.filter(isnan('humidity)).count
+
+val result = non_nan_df.union(nan_df)
